@@ -1,0 +1,118 @@
+import matplotlib.pyplot as plt
+
+def format_time(value):
+    """Converte horas decimais em formato Hh Mmin."""
+    horas = int(value)
+    minutos = int((value - horas) * 60)
+    return f"{horas}h {minutos}min"
+
+def format_hhmm(value):
+    """Converte horas decimais para string HH:MM."""
+    horas = int(value)
+    minutos = int(round((value - horas) * 60))
+    minutos = minutos if minutos < 60 else 59
+    return f"{horas:02d}:{minutos:02d}"
+
+
+# ==============================
+#   COLETANDO DADOS DO USUÁRIO
+# ==============================
+
+num_clientes = int(input("Quantos clientes deseja cadastrar? "))
+
+chegadas = []
+duracoes = []
+
+print("\n=== Informe os horários de chegada (em horas, ex: 14.3) ===")
+for i in range(num_clientes):
+    chegada = float(input(f"Chegada do cliente {i+1}: "))
+    chegadas.append(chegada)
+
+print("\n=== Informe a duração do atendimento (em MINUTOS) ===")
+for i in range(num_clientes):
+    duracao = float(input(f"Duração do atendimento do cliente {i+1} (min): "))
+    duracoes.append(duracao)
+
+
+# ==============================
+#       PROCESSAMENTO
+# ==============================
+
+tempo_inicio = []
+tempo_fim = []
+tempo_espera = []
+fila_list = []
+
+fim_anterior = chegadas[0]
+fila_atual = 0
+
+for i in range(num_clientes):
+    chegada = chegadas[i]
+    duracao_horas = duracoes[i] / 60
+
+    # Verifica se há fila
+    if chegada < fim_anterior:
+        fila_atual += 1
+        inicio = fim_anterior
+    else:
+        fila_atual = 0
+        inicio = chegada
+
+    fim = inicio + duracao_horas
+    espera = inicio - chegada
+
+    tempo_inicio.append(inicio)
+    tempo_fim.append(fim)
+    tempo_espera.append(espera)
+    fila_list.append(fila_atual)
+
+    fim_anterior = fim
+
+
+# ==============================
+#       RESULTADOS
+# ==============================
+
+print("\n=== TABELA DO SISTEMA ===")
+print("Cliente | Chegada | Início | Fim | Espera | Fila")
+
+for i in range(num_clientes):
+    print(
+        f"{i+1} | "
+        f"{chegadas[i]} | "
+        f"{tempo_inicio[i]:.2f} | "
+        f"{tempo_fim[i]:.2f} | "
+        f"{format_time(tempo_espera[i])} | "
+        f"{fila_list[i]}"
+    )
+
+# ==============================
+#     GERAR IMAGEM DA TABELA
+# ==============================
+
+def save_table_image(chegadas, inicio, fim, espera, fila, filename="tabela_resultados.png"):
+    headers = ["Cliente", "Chegada", "Início", "Fim", "Espera", "Fila"]
+    rows = []
+    for i in range(len(chegadas)):
+        rows.append([
+            str(i+1),
+            format_hhmm(chegadas[i]),
+            format_hhmm(inicio[i]),
+            format_hhmm(fim[i]),
+            format_time(espera[i]),
+            str(fila[i])
+        ])
+
+    fig, ax = plt.subplots(figsize=(10, 0.6 + 0.5 * len(rows)))
+    ax.axis('off')
+    table = ax.table(cellText=rows, colLabels=headers, cellLoc='center', loc='center')
+    table.auto_set_font_size(False)
+    table.set_fontsize(10)
+    table.scale(1, 1.2)
+    plt.tight_layout()
+    plt.savefig(filename, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Imagem salva em: {filename}")
+
+# salvar imagem com os resultados atuais
+save_table_image(chegadas, tempo_inicio, tempo_fim, tempo_espera, fila_list)
